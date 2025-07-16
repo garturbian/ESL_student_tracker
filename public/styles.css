@@ -1,0 +1,223 @@
+body {
+    font-family: sans-serif;
+    margin: 20px;
+}
+
+h1, h2, h3, h4 {
+    color: #333;
+}
+
+hr {
+    border: 0;
+    height: 1px;
+    background: #ccc;
+    margin: 20px 0;
+}
+
+#students-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.student-card {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+    overflow: hidden; /* Ensures content doesn't spill out during collapse */
+}
+
+.student-card-header {
+    padding: 15px;
+    background-color: #e2e6ea; /* Lighter background for header */
+    cursor: pointer;
+    font-weight: bold;
+    margin: 0; /* Remove default h3 margin */
+}
+
+.student-card-header:hover {
+    background-color: #d6dbe0;
+}
+
+.student-card-content {
+    padding: 15px;
+    padding-top: 0; /* Adjust padding for smooth transition */
+}
+
+.student-card input[type="text"],
+.student-card input[type="number"],
+.student-card textarea {
+    width: calc(100% - 10px);
+    padding: 5px;
+    margin-bottom: 5px;
+    border: 1px solid #ddd;
+    border-radius: 3px;
+}
+
+.student-card button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 5px;
+    margin-right: 5px;
+}
+
+.student-card button:hover {
+    background-color: #0056b3;
+}
+
+#lesson-parser,
+#create-student-form {
+    background-color: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+#lesson-parser textarea,
+#create-student-form input[type="text"],
+#create-student-form input[type="number"],
+#lesson-parser select {
+    width: calc(100% - 22px); /* Account for padding and border */
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+#lesson-parser button,
+#create-student-form button {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#lesson-parser button:hover,
+#create-student-form button:hover {
+    background-color: #218838;
+}
+
+.vocabulary-list ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.vocabulary-list li {
+    background-color: #e9ecef;
+    border: 1px solid #dee2e6;
+    padding: 8px;
+    margin-bottom: 5px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.vocabulary-list li button {
+    margin-left: 5px;
+    background-color: #6c757d;
+}
+
+.vocabulary-list li button:hover {
+    background-color: #5a6268;
+}
+
+.vocabulary-list li .edit-vocab-word,
+.vocabulary-list li .edit-vocab-translation {
+    flex-grow: 1;
+    margin-right: 5px;
+}
+
+.vocabulary-list li .delete-vocab-button {
+    background-color: #dc3545;
+}
+
+.vocabulary-list li .delete-vocab-button:hover {
+    background-color: #c82333;
+}
+
+/* Modal Styles */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto; /* 15% from the top and centered */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%; /* Could be more or less, depending on screen size */
+    border-radius: 8px;
+    position: relative;
+}
+
+.close-button {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.modal-content input[type="text"] {
+    width: calc(100% - 22px);
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.modal-content button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.modal-content button:hover {
+    background-color: #0056b3;
+}
+
+.display-google-docs-links ul {
+    list-style-type: none;
+    padding: 0;
+    margin-top: 10px;
+}
+
+.display-google-docs-links li {
+    margin-bottom: 5px;
+}
+
+.display-google-docs-links a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.display-google-docs-links a:hover {
+    text-decoration: underline;
+}

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESL Student Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <h1>ESL Student Tracker</h1>
+
+    <hr>
+
+    <button id="go-to-add-student-button" onclick="location.href='add_student.html'">Add New Student</button>
+
+    <hr>
+
+    <h2>Existing Students</h2>
+    <div id="students-container"></div>
+
+    
+
+    <div id="add-link-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">&times;</span>
+            <h2>Add Google Doc Link</h2>
+            <input type="hidden" id="modal-student-id">
+            <label for="link-name">Name of Lesson:</label>
+            <input type="text" id="link-name"><br>
+            <label for="link-url">Link:</label>
+            <input type="text" id="link-url"><br>
+            <button id="save-link-button">Save Link</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
