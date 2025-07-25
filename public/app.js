@@ -1,55 +1,47 @@
+
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('app.js: DOMContentLoaded event fired.');
     const studentsContainer = document.getElementById('students-container');
 
     // Modal elements
     const addLinkModal = document.getElementById('add-link-modal');
-    const closeButton = document.querySelector('.close-button');
+    const createLessonModal = document.getElementById('create-lesson-modal');
+    const closeButton = document.querySelector('#add-link-modal .close-button');
+    const closeLessonModalButton = document.querySelector('#create-lesson-modal .close-button');
     const saveLinkButton = document.getElementById('save-link-button');
+    const generateLessonButton = document.getElementById('generate-lesson-button');
     const modalStudentId = document.getElementById('modal-student-id');
+    const lessonModalStudentId = document.getElementById('lesson-modal-student-id');
     const linkNameInput = document.getElementById('link-name');
     const linkUrlInput = document.getElementById('link-url');
+    const startWordRankInput = document.getElementById('start-word-rank');
+    const numWordsInput = document.getElementById('num-words');
 
-    let currentStudentGoogleDocsLinks = ''; // To hold the current links for the student being edited
+    let currentStudentGoogleDocsLinks = ''; 
 
     function fetchAndDisplayStudents() {
-        console.log('app.js: fetchAndDisplayStudents called.');
-        studentsContainer.innerHTML = ''; // Clear existing students
+        studentsContainer.innerHTML = ''; 
         fetch('/api/students')
-            .then(response => {
-                console.log('app.js: Received response from /api/students', response);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
-                console.log('app.js: Data received from /api/students', data);
                 if (data.data && data.data.length > 0) {
                     data.data.forEach(student => {
-                        console.log('app.js: Processing student:', student.name);
-                        // Parse Google Docs links for display
                         let googleDocsDisplayHtml = '';
                         if (student.google_docs_links) {
-                            const links = student.google_docs_links.split('\n').filter(link => link.trim() !== '');
-                            googleDocsDisplayHtml = '<ul>';
-                            links.forEach(linkLine => {
-                                const parts = linkLine.split('|').map(s => s.trim());
-                                if (parts.length === 2) {
-                                    const text = parts[0];
-                                    const url = parts[1];
-                                    googleDocsDisplayHtml += `<li><a href="${url}" target="_blank">${text}</a> <button class="delete-link-button" data-student-id="${student.id}" data-link="${linkLine}">Delete</button></li>`;
-                                } else {
-                                    googleDocsDisplayHtml += `<li>${linkLine} <button class="delete-link-button" data-student-id="${student.id}" data-link="${linkLine}">Delete</button></li>`; // Fallback if format is incorrect
-                                }
-                            });
-                            googleDocsDisplayHtml += '</ul>';
+                            try {
+                                const links = JSON.parse(student.google_docs_links);
+                                googleDocsDisplayHtml = '<ul>';
+                                links.forEach(link => {
+                                    googleDocsDisplayHtml += `<li><a href="${link.url}" target="_blank">${link.name}</a></li>`;
+                                });
+                                googleDocsDisplayHtml += '</ul>';
+                            } catch (e) {
+                                googleDocsDisplayHtml = '<p>Could not parse lesson links.</p>';
+                            }
                         }
 
-                        // Populate student cards
                         const studentCard = document.createElement('div');
                         studentCard.classList.add('student-card');
-                        studentCard.dataset.studentId = student.id; // Add student ID to the card itself
+                        studentCard.dataset.studentId = student.id;
                         studentCard.innerHTML = `
                             <h3 class="student-card-header">${student.name}</h3>
                             <div class="student-card-content" style="display: none;">
@@ -66,8 +58,9 @@ document.addEventListener('DOMContentLoaded', () => {
                                     <button class="save-comment-button" data-student-id="${student.id}">Save Comment</button>
                                 </div>
                                 <div>
-                                    <strong>Google Docs Links:</strong>
-                                    <button class="add-link-button" data-student-id="${student.id}" data-current-links="${student.google_docs_links || ''}">Add Link</button>
+                                    <strong>Lessons & Links:</strong>
+                                    <button class="add-link-button" data-student-id="${student.id}" data-current-links='${student.google_docs_links || '[]'}'>Add Link</button>
+                                    <button class="create-lesson-button" data-student-id="${student.id}" data-student-name="${student.name}">Create Lesson</button>
                                     <div class="display-google-docs-links">${googleDocsDisplayHtml}</div>
                                 </div>
                                 <button class="view-vocab-button" data-student-id="${student.id}">View Vocabulary</button>
@@ -76,38 +69,25 @@ document.addEventListener('DOMContentLoaded', () => {
                         `;
                         studentsContainer.appendChild(studentCard);
                     });
-
-                    // Add event listeners to the new buttons
                     addEventListeners();
-                } else {
-                    console.log('app.js: No student data received or data.data is empty.');
                 }
             })
             .catch(error => {
-                console.error('app.js: Error fetching students:', error);
+                console.error('Error fetching students:', error);
             });
     }
 
     function addEventListeners() {
-        // Accordion logic
         document.querySelectorAll('.student-card-header').forEach(header => {
             header.addEventListener('click', (event) => {
                 const clickedCard = event.target.closest('.student-card');
                 const clickedContent = clickedCard.querySelector('.student-card-content');
-
-                // Collapse all other cards
                 document.querySelectorAll('.student-card-content').forEach(content => {
                     if (content !== clickedContent && content.style.display === 'block') {
                         content.style.display = 'none';
                     }
                 });
-
-                // Toggle clicked card
-                if (clickedContent.style.display === 'block') {
-                    clickedContent.style.display = 'none';
-                } else {
-                    clickedContent.style.display = 'block';
-                }
+                clickedContent.style.display = clickedContent.style.display === 'block' ? 'none' : 'block';
             });
         });
 
@@ -143,11 +123,10 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Add Link button click handler
         document.querySelectorAll('.add-link-button').forEach(button => {
             button.addEventListener('click', (event) => {
                 const studentId = event.target.dataset.studentId;
-                currentStudentGoogleDocsLinks = event.target.dataset.currentLinks; // Store current links
+                currentStudentGoogleDocsLinks = event.target.dataset.currentLinks;
                 modalStudentId.value = studentId;
                 linkNameInput.value = '';
                 linkUrlInput.value = '';
@@ -155,25 +134,40 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         });
 
-        // Close modal button
+        document.querySelectorAll('.create-lesson-button').forEach(button => {
+            button.addEventListener('click', (event) => {
+                const studentId = event.target.dataset.studentId;
+                const studentName = event.target.dataset.studentName;
+                lessonModalStudentId.value = studentId;
+                document.querySelector('#create-lesson-modal h2').textContent = `Create a New Lesson for ${studentName}`;
+                startWordRankInput.value = '';
+                numWordsInput.value = '';
+                createLessonModal.style.display = 'block';
+            });
+        });
+
         closeButton.addEventListener('click', () => {
             addLinkModal.style.display = 'none';
         });
 
-        // Save Link button in modal
+        closeLessonModalButton.addEventListener('click', () => {
+            createLessonModal.style.display = 'none';
+        });
+
         saveLinkButton.addEventListener('click', () => {
             const studentId = modalStudentId.value;
             const linkName = linkNameInput.value.trim();
             const linkUrl = linkUrlInput.value.trim();
 
             if (linkName && linkUrl) {
-                const newLinkEntry = `${linkName} | ${linkUrl}`;
-                let updatedLinks = currentStudentGoogleDocsLinks;
-                if (updatedLinks) {
-                    updatedLinks += `\n${newLinkEntry}`;
-                } else {
-                    updatedLinks = newLinkEntry;
+                const newLink = { name: linkName, url: linkUrl };
+                let existingLinks = [];
+                try {
+                    existingLinks = JSON.parse(currentStudentGoogleDocsLinks);
+                } catch (e) {
+                    // If parsing fails, start with an empty array
                 }
+                const updatedLinks = JSON.stringify([...existingLinks, newLink]);
                 updateStudent(studentId, { google_docs_links: updatedLinks });
                 addLinkModal.style.display = 'none';
             } else {
@@ -181,35 +175,45 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Close modal if clicked outside
+        generateLessonButton.addEventListener('click', () => {
+            const studentId = lessonModalStudentId.value;
+            const studentName = document.querySelector(`.student-card[data-student-id="${studentId}"] .student-card-header`).textContent;
+            const startWordRank = startWordRankInput.value;
+            const numWords = numWordsInput.value;
+
+            if (startWordRank && numWords) {
+                fetch('/api/lessons', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        student_id: studentId,
+                        student_name: studentName,
+                        start_word_rank: startWordRank,
+                        num_words: numWords
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.message === 'success') {
+                        createLessonModal.style.display = 'none';
+                        fetchAndDisplayStudents();
+                    } else {
+                        alert(`Error: ${data.error}`);
+                    }
+                });
+            } else {
+                alert('Please fill in all fields.');
+            }
+        });
+
         window.addEventListener('click', (event) => {
             if (event.target === addLinkModal) {
                 addLinkModal.style.display = 'none';
             }
+            if (event.target === createLessonModal) {
+                createLessonModal.style.display = 'none';
+            }
         });
-
-        // Add event listener for delete link buttons
-        document.querySelectorAll('.delete-link-button').forEach(button => {
-            button.addEventListener('click', (event) => {
-                const studentId = event.target.dataset.studentId;
-                const linkToDelete = event.target.dataset.link;
-                deleteLink(studentId, linkToDelete);
-            });
-        });
-    }
-
-    function deleteLink(studentId, linkToDelete) {
-        // Fetch the current student data to get the full list of links
-        fetch(`/api/students`)
-            .then(response => response.json())
-            .then(data => {
-                const student = data.data.find(s => s.id == studentId);
-                if (student && student.google_docs_links) {
-                    const links = student.google_docs_links.split('\n').filter(link => link.trim() !== '');
-                    const updatedLinks = links.filter(link => link !== linkToDelete).join('\n');
-                    updateStudent(studentId, { google_docs_links: updatedLinks });
-                }
-            });
     }
 
     function toggleVocabularyList(studentId, vocabListDiv) {
@@ -275,8 +279,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify({ word, translation })
                 }).then(() => {
                     const vocabListDiv = document.getElementById(`vocab-list-${studentId}`);
-                    toggleVocabularyList(studentId, vocabListDiv); // Close
-                    toggleVocabularyList(studentId, vocabListDiv); // Re-open to refresh
+                    toggleVocabularyList(studentId, vocabListDiv);
+                    toggleVocabularyList(studentId, vocabListDiv);
                 });
             });
         });
@@ -306,7 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(response => response.json())
         .then(data => {
             if(data.message === 'success') {
-                fetchAndDisplayStudents(); // Re-fetch and display all students to update the card
+                fetchAndDisplayStudents();
             }
         });
     }

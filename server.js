@@ -1,10 +1,12 @@
-
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
+const fs = require('fs');
 
 const app = express();
 const port = 3000;
+
+const gslWords = require('./gsl-words2.js');
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
@@ -81,7 +83,7 @@ app.post('/api/students', (req, res) => {
 
 app.post('/api/vocabulary', (req, res) => {
     const { student_id, word, translation } = req.body;
-    const lesson_date = new Date().toISOString().slice(0, 10); // Get current date in YYYY-MM-DD format
+    const lesson_date = new Date().toISOString().slice(0, 10);
 
     if (!student_id || !word) {
         return res.status(400).json({ "error": "Missing required fields: student_id and word" });
@@ -180,6 +182,133 @@ app.delete('/api/vocabulary/:id', (req, res) => {
             message: "success",
             changes: this.changes
         });
+    });
+});
+
+app.post('/api/lessons', (req, res) => {
+    const { student_id, student_name, start_word_rank, num_words } = req.body;
+
+    if (!student_id || !student_name || !start_word_rank || !num_words) {
+        return res.status(400).json({ "error": "Missing required fields" });
+    }
+
+    const startIndex = parseInt(start_word_rank, 10) - 1;
+    const numWords = parseInt(num_words, 10);
+    const endIndex = startIndex + numWords;
+
+    if (startIndex < 0 || endIndex > gslWords.length || startIndex >= endIndex || numWords <= 0) {
+        return res.status(400).json({ "error": "Invalid word range or number of words" });
+    }
+
+    const lessonWords = gslWords.slice(startIndex, endIndex);
+
+    const lessonHtml = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Lesson for ${student_name}</title>
+            <link rel="stylesheet" href="/styles.css">
+        </head>
+        <body>
+            <h1>Lesson for ${student_name}</h1>
+            <h2>Words from rank ${start_word_rank} to ${endIndex}</h2>
+            <form id="progress-form">
+                <ul>
+                    ${lessonWords.map(word => `<li><input type="checkbox" name="learned_words" value="${word}"> ${word}</li>`).join('')}
+                </ul>
+                <input type="hidden" name="student_id" value="${student_id}">
+                <button type="submit">Save Progress</button>
+            </form>
+            <script>
+                document.getElementById('progress-form').addEventListener('submit', function(event) {
+                    event.preventDefault();
+                    const formData = new FormData(this);
+                    const studentId = formData.get('student_id');
+                    const learnedWords = formData.getAll('learned_words');
+
+                    fetch('/api/progress', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ student_id: studentId, learned_words: learnedWords })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.message === 'success') {
+                            alert('Progress saved!');
+                        } else {
+                            alert('Error saving progress.');
+                        }
+                    });
+                });
+            </script>
+        </body>
+        </html>
+    `;
+
+    const lessonFileName = `lesson_${student_id}_${Date.now()}.html`;
+    const lessonFilePath = path.join(__dirname, 'public', lessonFileName);
+
+    fs.writeFile(lessonFilePath, lessonHtml, (err) => {
+        if (err) {
+            return res.status(500).json({ "error": "Failed to save lesson file" });
+        }
+
+        const lessonLink = `/${lessonFileName}`;
+        db.get("SELECT google_docs_links FROM students WHERE id = ?", [student_id], (err, row) => {
+            if (err) {
+                return res.status(500).json({ "error": err.message });
+            }
+
+            let existingLinks = [];
+            if (row && row.google_docs_links) {
+                try {
+                    existingLinks = JSON.parse(row.google_docs_links);
+                } catch (e) {
+                    existingLinks = [];
+                }
+            }
+
+            const newLink = { name: `Lesson ${start_word_rank}-${endIndex}`, url: lessonLink };
+            const updatedLinks = JSON.stringify([...existingLinks, newLink]);
+
+            db.run(`UPDATE students SET google_docs_links = ? WHERE id = ?`, [updatedLinks, student_id], function(err) {
+                if (err) {
+                    return res.status(500).json({ "error": err.message });
+                }
+                res.json({ 
+                    "message": "success", 
+                    "lesson_url": lessonLink 
+                });
+            });
+        });
+    });
+});
+
+app.post('/api/progress', (req, res) => {
+    const { student_id, learned_words } = req.body;
+
+    if (!student_id || !learned_words || !Array.isArray(learned_words)) {
+        return res.status(400).json({ "error": "Missing required fields" });
+    }
+
+    const lesson_date = new Date().toISOString().slice(0, 10);
+    const stmt = db.prepare(`INSERT INTO vocabulary (student_id, word, lesson_date) VALUES (?, ?, ?)`);
+
+    db.serialize(() => {
+        db.run("BEGIN TRANSACTION");
+        learned_words.forEach(word => {
+            stmt.run(student_id, word, lesson_date);
+        });
+        db.run("COMMIT");
+    });
+
+    stmt.finalize((err) => {
+        if (err) {
+            return res.status(500).json({ "error": err.message });
+        }
+        res.json({ "message": "success" });
     });
 });
 

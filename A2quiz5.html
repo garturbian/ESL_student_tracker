@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESL Vocabulary Quiz (A2 Level)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        #quiz-container {
+            background: #fff;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+        }
+        #question {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: #000;
+        }
+        #question .blank {
+            display: inline-block;
+            width: 100px;
+            border-bottom: 2px solid #4a5568;
+            margin: 0 4px -3px 4px;
+        }
+        #options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
+        }
+        .option {
+            background-color: #e9ecef;
+            border: 2px solid #ced4da;
+            border-radius: 10px;
+            padding: 1rem;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+        .option:hover:not(.disabled) {
+            background-color: #dde2e6;
+            transform: translateY(-2px);
+        }
+        .option.correct {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        .option.incorrect {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        .option.disabled {
+            cursor: not-allowed;
+        }
+        #feedback {
+            font-size: 1.2rem;
+            font-weight: bold;
+            height: 25px;
+            margin-bottom: 1rem;
+        }
+        #next-btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 1rem 2rem;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            width: 100%;
+        }
+        #next-btn:hover {
+            background-color: #0056b3;
+        }
+        #results {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="quiz-container">
+        <div id="question-container">
+            <p id="question"></p>
+            <div id="options"></div>
+            <p id="feedback"></p>
+            <button id="next-btn">Next</button>
+        </div>
+        <div id="results-container" style="display: none;">
+            <p id="results"></p>
+        </div>
+    </div>
+
+    <script>
+        const quizData = [
+            { question: "__BLANK__ is the sky blue?", answer: "why" },
+            { question: "I listen to music __BLANK__ I work.", answer: "while" },
+            { question: "The __BLANK__ is a big place.", answer: "world" },
+            { question: "There are seven days in a __BLANK__.", answer: "week" },
+            { question: "Children love to __BLANK__ outside.", answer: "play" },
+            { question: "It __BLANK__ rain later, so take an umbrella.", answer: "might" },
+            { question: "You __BLANK__ finish your homework.", answer: "must" },
+            { question: "I am going __BLANK__ now.", answer: "home" },
+            { question: "I have __BLANK__ seen a lion.", answer: "never" },
+            { question: "Does the price __BLANK__ tax?", answer: "include" },
+            { question: "This is an English __BLANK__.", answer: "course" },
+            { question: "My __BLANK__ is near the park.", answer: "house" },
+            { question: "I have to write a __BLANK__ for school.", answer: "report" },
+            { question: "We are in the same __BLANK__ for the project.", answer: "group" },
+            { question: "In __BLANK__ of fire, leave the building.", answer: "case" },
+            { question: "That __BLANK__ is a doctor.", answer: "woman" },
+            { question: "The dog ran __BLANK__ the tree.", answer: "around" },
+            { question: "I am reading a good __BLANK__.", answer: "book" },
+            { question: "My __BLANK__ is very important to me.", answer: "family" },
+            { question: "You __BLANK__ tired. You should rest.", answer: "seem" },
+            { question: "__BLANK__ me help you with that.", answer: "let" },
+            { question: "Can you say that __BLANK__?", answer: "again" },
+            { question: "Be __BLANK__ to animals.", answer: "kind" },
+            { question: "Please __BLANK__ the door closed.", answer: "keep" },
+            { question: "Can you __BLANK__ the music?", answer: "hear" },
+            { question: "The computer __BLANK__ is not working.", answer: "system" },
+            { question: "I brush my teeth __BLANK__ day.", answer: "every" },
+            { question: "Can I ask a __BLANK__?", answer: "question" },
+            { question: "Please be quiet __BLANK__ the movie.", answer: "during" },
+            { question: "He is __BLANK__ late for class.", answer: "always" },
+            { question: "An elephant is a __BLANK__ animal.", answer: "big" },
+            { question: "Please __BLANK__ the table for dinner.", answer: "set" },
+            { question: "A mouse is a __BLANK__ animal.", answer: "small" },
+            { question: "I need to __BLANK__ for my test.", answer: "study" },
+            { question: "Please __BLANK__ the rules.", answer: "follow" },
+            { question: "The movie will __BLANK__ soon.", answer: "begin" },
+            { question: "It is __BLANK__ to be on time.", answer: "important" },
+            { question: "I have lived here __BLANK__ 2010.", answer: "since" },
+            { question: "I like to __BLANK__ in the park.", answer: "run" },
+            { question: "The cat is __BLANK__ the bed.", answer: "under" },
+            { question: "It's your __BLANK__ to play.", answer: "turn" },
+            { question: "There are a __BLANK__ apples left.", answer: "few" },
+            { question: "Please __BLANK__ me a glass of water.", answer: "bring" },
+            { question: "I wake up __BLANK__ in the morning.", answer: "early" },
+            { question: "Raise your __BLANK__ if you have a question.", answer: "hand" },
+            { question: "New York is a __BLANK__ in the USA.", answer: "state" },
+            { question: "Let's __BLANK__ the chairs.", answer: "move" },
+            { question: "I need to save __BLANK__.", answer: "money" },
+            { question: "It is a __BLANK__ that the sky is blue.", answer: "fact" },
+            { question: "I am tired; __BLANK__, I must finish my work.", answer: "however" },
+            { question: "This __BLANK__ is good for a picnic.", answer: "area" },
+            { question: "The hotel will __BLANK__ a free breakfast.", answer: "provide" },
+            { question: "What is your __BLANK__?", answer: "name" },
+            { question: "I like to __BLANK__ books.", answer: "read" },
+            { question: "She is my best __BLANK__.", answer: "friend" },
+            { question: "January is the first __BLANK__ of the year.", answer: "month" },
+            { question: "The city has a __BLANK__ park.", answer: "large" },
+            { question: "He started a new __BLANK__.", answer: "business" },
+            { question: "I can't do it __BLANK__ your help.", answer: "without" },
+            { question: "I need more __BLANK__ about the topic.", answer: "information" },
+            { question: "Please __BLANK__ the door.", answer: "open" },
+            { question: "I would like to __BLANK__ a pizza.", answer: "order" },
+            { question: "The __BLANK__ makes the laws.", answer: "government" },
+            { question: "What is the meaning of this __BLANK__?", answer: "word" },
+            { question: "There is an __BLANK__ with the car.", answer: "issue" },
+            { question: "I am going to the __BLANK__ to buy fruit.", answer: "market" },
+            { question: "You need to __BLANK__ for the ticket.", answer: "pay" },
+            { question: "They will __BLANK__ a new house.", answer: "build" },
+            { question: "Please __BLANK__ my hand.", answer: "hold" },
+            { question: "The hotel has good __BLANK__.", answer: "service" },
+            { question: "It is __BLANK__ the rules to cheat.", answer: "against" },
+            { question: "I __BLANK__ you can do it.", answer: "believe" },
+            { question: "This is my __BLANK__ time here.", answer: "second" },
+            { question: "Even __BLANK__ it was cold, we went out.", answer: "though" },
+            { question: "__BLANK__, I would like some tea.", answer: "yes" },
+            { question: "I __BLANK__ my family.", answer: "love" },
+            { question: "The price will __BLANK__ next year.", answer: "increase" },
+            { question: "He is looking for a new __BLANK__.", answer: "job" },
+            { question: "What is your __BLANK__ for the weekend?", answer: "plan" },
+            { question: "The __BLANK__ of the test was good.", answer: "result" },
+            { question: "Please go __BLANK__.", answer: "away" },
+            { question: "For __BLANK__, an apple is a fruit.", answer: "example" },
+            { question: "What will __BLANK__ next?", answer: "happen" },
+            { question: "They __BLANK__ me a job.", answer: "offer" },
+            { question: "The __BLANK__ girl is playing.", answer: "young" },
+            { question: "Please __BLANK__ the door.", answer: "close" },
+            { question: "This TV __BLANK__ is very interesting.", answer: "program" },
+            { question: "A good captain will __BLANK__ the team.", answer: "lead" },
+            { question: "I need to __BLANK__ some milk.", answer: "buy" },
+            { question: "I don't __BLANK__ the question.", answer: "understand" },
+            { question: "__BLANK__ you for your help.", answer: "thank" },
+            { question: "The station is not __BLANK__ from here.", answer: "far" },
+            { question: "__BLANK__ is a sunny day.", answer: "today" },
+            { question: "The meeting is in one __BLANK__.", answer: "hour" },
+            { question: "She is a good __BLANK__.", answer: "student" },
+            { question: "She has a happy __BLANK__.", answer: "face" },
+            { question: "I __BLANK__ I can pass the test.", answer: "hope" },
+            { question: "That is a good __BLANK__!", answer: "idea" },
+            { question: "What is the __BLANK__ of this book?", answer: "cost" },
+            { question: "I have __BLANK__ money than you.", answer: "less" },
+            { question: "My __BLANK__ is very clean.", answer: "room" }
+        ];
+
+        const allWords = quizData.map(item => item.answer);
+
+        const questionEl = document.getElementById('question');
+        const optionsEl = document.getElementById('options');
+        const feedbackEl = document.getElementById('feedback');
+        const nextBtn = document.getElementById('next-btn');
+        const quizContainer = document.getElementById('question-container');
+        const resultsContainer = document.getElementById('results-container');
+        const resultsEl = document.getElementById('results');
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let answerSelected = false;
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function loadQuestion() {
+            answerSelected = false;
+            feedbackEl.textContent = '';
+            const currentQuestion = quizData[currentQuestionIndex];
+            questionEl.innerHTML = currentQuestion.question.replace('__BLANK__', '<span class="blank"></span>');
+
+            optionsEl.innerHTML = '';
+            
+            let distractorPool = allWords.filter(word => word !== currentQuestion.answer);
+            shuffleArray(distractorPool);
+            const distractors = distractorPool.slice(0, 3);
+
+            const choices = [...distractors, currentQuestion.answer];
+            shuffleArray(choices);
+
+            choices.forEach(choice => {
+                const option = document.createElement('div');
+                option.textContent = choice;
+                option.classList.add('option');
+                option.addEventListener('click', () => selectAnswer(option, choice === currentQuestion.answer));
+                optionsEl.appendChild(option);
+            });
+        }
+
+        function selectAnswer(option, isCorrect) {
+            if (answerSelected) return;
+            answerSelected = true;
+
+            // Disable all options
+            const allOptions = optionsEl.querySelectorAll('.option');
+            allOptions.forEach(opt => opt.classList.add('disabled'));
+
+            if (isCorrect) {
+                score++;
+                option.classList.add('correct');
+                feedbackEl.textContent = 'Correct!';
+                feedbackEl.style.color = '#155724';
+            } else {
+                option.classList.add('incorrect');
+                feedbackEl.textContent = 'Not quite!';
+                feedbackEl.style.color = '#721c24';
+            }
+        }
+
+        nextBtn.addEventListener('click', () => {
+            if (!answerSelected) {
+                alert('Please select an answer!');
+                return;
+            }
+            currentQuestionIndex++;
+            if (currentQuestionIndex < quizData.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        });
+
+        function showResults() {
+            quizContainer.style.display = 'none';
+            resultsContainer.style.display = 'block';
+            resultsEl.textContent = `You scored ${score} out of ${quizData.length}!`;
+        }
+
+        shuffleArray(quizData);
+        loadQuestion();
+    </script>
+
+</body>
+</html>
